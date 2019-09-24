@@ -1,0 +1,4 @@
+1、Translation：翻译插件
+2、api Debugger：api调试插件
+3、key protomer：快捷键提示插件
+4、codeGlance：代码地图插件
