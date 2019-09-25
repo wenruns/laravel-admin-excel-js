@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ReportMainFormExportBtn extends Export
 {
-
     public function setStatistics(): array
     {
         // TODO: Implement setStatistics() method.
@@ -62,10 +61,16 @@ EOT;
         ];
     }
 
+    /**
+     * @return array
+     * 设置筛选中某些字段对应的
+     */
     public function setSpecialField(): array
     {
         // TODO: Implement setSpecialField() method.
-        return [];
+        return [
+//            field_name => new_field_name
+        ];
     }
     public function setString(): array
     {
@@ -91,13 +96,6 @@ EOT;
     {
         // TODO: Implement setFileName() method.
         return '贷款信息综合报表#'.date('YmdHis');
-    }
-
-
-    public function setExporter(): string
-    {
-        // TODO: Implement setExporter() method.
-        return '\App\Admin\Extensions\Expoter\ExportBtn\ReportMainFormExportBtn';
     }
 
     public function setHead(): array
@@ -144,106 +142,149 @@ EOT;
     }
 
 
+
+    public function setFilterField(): array
+    {
+        // TODO: Implement setFilterField() method.
+        return [
+            'apply_id' => [
+                'operator' => '=', // = | < | > | <= | >= | <> | like | in | between | null | notNull |
+                'column' => 'apply_id',
+                'format_value_callback' => function($val){ return $val; },
+            ],
+            'custom_name' => [
+                'operator' => 'like',
+                'column' => 'custom_name',
+            ],
+            'sales_name' => [
+                'operator' => 'like',
+                'column' => 'sales_name',
+            ],
+            'building_name' => [
+                'operator' => 'like',
+                'column' => 'building_name',
+            ],
+            'bank_name' => [
+                'operator' => 'like',
+                'column' => 'bank_name',
+            ],
+            'sales_channel' => [
+                'operator' => 'like',
+                'column' => 'sales_channel',
+            ],
+            'org_code' => [
+                'operator' => '=',
+                'column' => 'org_code',
+            ],
+            'product_id' => [
+                'operator' => 'in',
+                'column' => 'product_id',
+            ],
+            'loan_audit_time' => [
+                'operator' => 'between',
+                'column' => 'loan_audit_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+                    return $val;
+                }
+            ],
+            'sign_time' => [
+                'operator' => 'between',
+                'column' => 'sign_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+                    return $val;
+                }
+            ],
+            'received_commission_time' => [
+                'operator' => 'between',
+                'column' => 'received_commission_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+                    return $val;
+                }
+            ],
+            'first_makeloan_time' => [
+                'operator' => 'between',
+                'column' => 'first_makeloan_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+//                    dd($val);
+//                    dd(request()->toArray());
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+//                    dd($val);
+
+                    return $val;
+                }
+            ],
+            'second_makeloan_time' => [
+                'operator' => 'between',
+                'column' => 'second_makeloan_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+                    return $val;
+                }
+            ],
+            'third_makeloan_time' => [
+                'operator' => 'between',
+                'column' => 'third_makeloan_time',
+                'start_index' => '',
+                'end_index' => '',
+                'format_value_callback' => function($val){
+                    if ($this->notNull($val, 'start')) {
+                        $val['start'] = strtotime($val['start'].' 00:00:00');
+                    }
+                    if ($this->notNull($val, 'end')) {
+                        $val['end'] = strtotime($val['end'].' 00:00:00');
+                    }
+                    return $val;
+                }
+            ]
+        ];
+    }
+
+
     public function setFilter(Builder $model): Builder
     {
         // TODO: Implement setFilter() method.
-        $request = request()->toArray();
         $permissionHelpService = new PermissionHelpService();       //权限
         $model->whereIn('org_code',array_keys($permissionHelpService->getPermissionList()));
-        if ($this->notNull($request, 'apply_id')) {
-            $model->where('apply_id', '=', $request['apply_id']);
-        }
-        if ($this->notNull($request, 'custom_name')) {
-            $model->where('custom_name', 'like', '%'.$request['custom_name'].'%');
-        }
-        if ($this->notNull($request, 'sales_name')) {
-            $model->where('sales_name', 'like', '%'.$request['sales_name'].'%');
-        }
-        if ($this->notNull($request, 'building_name')) {
-            $model->where('building_name', 'like', '%'.$request['building_name'].'%');
-        }
-        if ($this->notNull($request, 'bank_name')) {
-            $model->where('bank_name', 'like', '%'.$request['bank_name'].'%');
-        }
-
-        if ($this->notNull($request, 'sales_channel')) {
-            $model->where('sales_channel', 'like', '%'.$request['sales_channel'].'%');
-        }
-
-        if ($this->notNull($request, 'org_code')) {
-            $model->where('org_code', '=', $request['org_code']);
-        }
-
-        if ($this->notNull($request, 'product_id')) {
-            $model->whereIn('product_id', $request['product_id']);
-        }
-
-
-
-        if ($this->notNull($request, 'loan_audit_time')) {
-            if ($this->notNull($request['loan_audit_time'], 'start') && $this->notNull($request['loan_audit_time'], 'end')) {
-                $model->whereBetween('loan_audit_time', [strtotime($request['loan_audit_time']['start'].' 00:00:00'), strtotime($request['loan_audit_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['loan_audit_time'], 'start')) {
-                $model->where('loan_audit_time', '>=', strtotime($request['loan_audit_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['loan_audit_time'], 'end')) {
-                $model->where('loan_audit_time', '<=', strtotime($request['loan_audit_time']['end'].' 23:59:59'));
-            }
-        }
-
-        if ($this->notNull($request, 'sign_time')) {
-            if ($this->notNull($request['sign_time'], 'start') && $this->notNull($request['sign_time'], 'end')) {
-                $model->whereBetween('sign_time', [strtotime($request['sign_time']['start'].' 00:00:00'), strtotime($request['sign_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['sign_time'], 'start')) {
-                $model->where('sign_time', '>=', strtotime($request['sign_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['sign_time'], 'end')) {
-                $model->where('sign_time', '<=', strtotime($request['sign_time']['end'].' 23:59:59'));
-            }
-        }
-        if ($this->notNull($request, 'received_commission_time')) {
-            if ($this->notNull($request['received_commission_time'], 'start') && $this->notNull($request['received_commission_time'], 'end')) {
-                $model->whereBetween('received_commission_time', [strtotime($request['received_commission_time']['start'].' 00:00:00'), strtotime($request['received_commission_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['received_commission_time'], 'start')) {
-                $model->where('received_commission_time', '>=', strtotime($request['received_commission_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['received_commission_time'], 'end')) {
-                $model->where('received_commission_time', '<=', strtotime($request['received_commission_time']['end'].' 23:59:59'));
-            }
-        }
-
-        if ($this->notNull($request, 'first_makeloan_time')) {
-            if ($this->notNull($request['first_makeloan_time'], 'start') && $this->notNull($request['first_makeloan_time'], 'end')) {
-                $model->whereBetween('first_makeloan_time', [strtotime($request['first_makeloan_time']['start'].' 00:00:00'), strtotime($request['received_commission_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['first_makeloan_time'], 'start')) {
-                $model->where('first_makeloan_time', '>=', strtotime($request['first_makeloan_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['first_makeloan_time'], 'end')) {
-                $model->where('first_makeloan_time', '<=', strtotime($request['first_makeloan_time']['end'].' 23:59:59'));
-            }
-        }
-
-        if ($this->notNull($request, 'second_makeloan_time')) {
-            if ($this->notNull($request['second_makeloan_time'], 'start') && $this->notNull($request['second_makeloan_time'], 'end')) {
-                $model->whereBetween('second_makeloan_time', [strtotime($request['second_makeloan_time']['start'].' 00:00:00'), strtotime($request['received_commission_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['second_makeloan_time'], 'start')) {
-                $model->where('second_makeloan_time', '>=', strtotime($request['second_makeloan_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['second_makeloan_time'], 'end')) {
-                $model->where('second_makeloan_time', '<=', strtotime($request['second_makeloan_time']['end'].' 23:59:59'));
-            }
-        }
-        if ($this->notNull($request, 'third_makeloan_time')) {
-            if ($this->notNull($request['third_makeloan_time'], 'start') && $this->notNull($request['third_makeloan_time'], 'end')) {
-                $model->whereBetween('third_makeloan_time', [strtotime($request['third_makeloan_time']['start'].' 00:00:00'), strtotime($request['received_commission_time']['end'].' 23:59:59')]);
-            } else if ($this->notNull($request['third_makeloan_time'], 'start')) {
-                $model->where('third_makeloan_time', '>=', strtotime($request['third_makeloan_time']['start'].' 00:00:00'));
-            } else if ($this->notNull($request['third_makeloan_time'], 'end')) {
-                $model->where('third_makeloan_time', '<=', strtotime($request['third_makeloan_time']['end'].' 23:59:59'));
-            }
-        }
-
         return $model;
     }
 
-    protected function notNull($data, $index)
-    {
-        return isset($data[$index]) && !empty($data[$index]);
-    }
 
 }

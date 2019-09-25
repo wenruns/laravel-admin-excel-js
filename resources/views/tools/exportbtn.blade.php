@@ -59,7 +59,7 @@
     /*}*/
 </style>
 <script>
-    {{isset($script) ? $script : ''}}
+    {!! isset($script) ? $script : '' !!}
     // ajax请求对象
     let ajaxRequest = null;
     // 显示提示框
@@ -93,7 +93,7 @@
             let callback = {!! $callback !!}; // 回调处理
             let statistic = {!! $statistic !!}; // 统计字段
 
-            console.log('statistic ==> ',statistic);
+            // console.log('statistic ==> ',statistic);
             // console.log(trans, toString, head, body);
             let excelData = new Array(); // 需要导出excel的数据集合
             let excelPage = 0; // 导出页数
@@ -142,7 +142,7 @@
                         }
                         break;
                     case 'range': // 指定页
-                        console.log('range');
+                        // console.log('range');
                         if(!pageRange) {
                             // 显示页数选择
                             rangeFunc(event);
@@ -192,7 +192,7 @@
                         }
                     })
                 }
-                console.log('data => ',data);
+                // console.log('data => ',data);
                 // 发送ajax请求
                 ajaxRequest = $.ajax({
                     url: export_url+'?_export='+rangePage,
@@ -242,7 +242,7 @@
                         if (isConfirm.value) {
                             let startPage = $("#rangePage-start").val();
                             let endPage = $("#rangePage-end").val();
-                            console.log(startPage, endPage)
+                            // console.log(startPage, endPage)
                             let pageRange = {
                                 start: startPage,
                                 end: endPage,
@@ -278,7 +278,10 @@
 
             // 统计信息
             function makeStatistic(){
-                console.log(statistic, head.length);
+                // console.log(statistic, head.length);
+                if(!statistic.length){
+                    return '';
+                }
                 let str = '';
                 for (var i in statistic) {
                     str += statistic[i].text + '：' + (Math.round(statistic[i].sum * 100)/100) + '&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -308,11 +311,11 @@
                 for (var i in data) {
                     headStr += '<tr>';
                     for (var j in body) {
+                        // console.log(data[i], body[j]);
                         let strTemp = '';
                         if (toString.indexOf(body[j]) >= 0) {
                             strTemp = "'";
                         }
-
                         if (body[j] in callback) {
                             let args = new Array();
                             for(var k in callback[body[j]]['argument']) {
@@ -322,9 +325,7 @@
                                 // console.log('data=',data[i][callback[body[j]]['argument'][k]])
                                 args.push(data[i][callback[body[j]]['argument'][k]])
                             }
-                            // console.log(callback[body[j]]['callback'])
                             data[i][body[j]] = eval(callback[body[j]]['callback']+'('+args.join(',')+')');
-                            // console.log('====>',args, data[i][body[j]])
                         }
                         if (body[j] in statistic) {
                             if(typeof statistic[body[j]].sum == 'undefined'){

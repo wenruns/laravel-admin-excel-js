@@ -13,8 +13,15 @@ use Illuminate\Database\Eloquent\Builder;
 
 abstract class Export
 {
+
+    function __construct()
+    {
+//        dd(get_class($this));
+    }
+
+
     protected $options = [
-        'text' => '导出',
+//        'text' => '导出',
     ];
 
     /**
@@ -35,11 +42,19 @@ abstract class Export
         return 'tools.exportbtn';
     }
 
+    /**
+     * @return string
+     * 自定义的路由
+     */
     public function setExportUrl()
     {
         return route('export');
     }
 
+    /**
+     * @return string
+     * 设置异步请求数据的请求方式
+     */
     public function setMethod()
     {
         return 'POST';
@@ -65,10 +80,9 @@ abstract class Export
         $options['method'] = $this->setMethod();
         $options['specialField'] = json_encode($this->setSpecialField());
         $res = $this->setCallback();
-        $options['callback'] = json_encode($res['result']);
-        $options['script'] = $res['script'];
+        $options['callback'] = json_encode($this->notNull($res, 'result') ? $res['result'] : []);
+        $options['script'] = $this->notNull($res, 'script') ? $res['script'] : '';
         $options['statistic'] = json_encode($this->setStatistics());
-//        dd($options);
         return view($this->setView(), $options);
     }
 
@@ -79,13 +93,30 @@ abstract class Export
     abstract public function setTrans() : array ; // 设置转义字段
     abstract public function setString() : array ;  // 设置专字符串字段
     abstract public function setFileName() : string ; // 设置导出文件名
-    abstract public function setExporter() : string ; // 设置导出控件
     abstract public function setField() : array ; // 设置查询字段
     abstract public function setModel() : array ; // 设置模型
-    abstract public function setFilter(Builder $model) : Builder; // 设置筛选条件
     abstract public function setSpecialField() : array ; // 设置特别字段
     abstract public function setStatistics() : array ; // 设置统计字段
+    abstract public function setFilterField() : array ; // 设置筛选过滤字段
 
+    /**
+     * @return string
+     * 设置导出控件类
+     */
+    public function setExporter()
+    {
+        return '\\'.get_class($this);
+    }
+
+    /**
+     * @param Builder $model
+     * @return Builder
+     * 额外的筛选条件
+     */
+    public function setFilter(Builder $model)
+    {
+        return $model;
+    }
 
     /**
      * @param $page
@@ -127,15 +158,73 @@ abstract class Export
             default:
 
         }
-        request()->offsetUnset('ids');
-        request()->offsetUnset('range');
-        request()->offsetUnset('perPage');
-        request()->offsetUnset('page');
-        request()->offsetUnset('exporter');
+        $model = $this->filter($model);
 
         $model = $this->setFilter($model);
+
         $data = $model->get()->toArray();
         return $data;
+    }
+
+    /**
+     * @param Builder $model
+     * @return Builder
+     * 过滤筛选条件
+     */
+    public function filter(Builder $model)
+    {
+        $filterField = $this->setFilterField();
+        $request = request()->toArray();
+        foreach ($filterField as $key => $item) {
+            if ($this->notNull($request, $key)) {
+                if ($this->notNull($item, 'format_value_callback')) {
+                    $val = call_user_func($item['format_value_callback'], $request[$key]);
+                } else {
+                    $val = $request[$key];
+                }
+                switch ($item['operator']) {
+                    case 'between':
+                        $start_index = $this->notNull($item, 'start_index') ? $item['start_index'] : 'start';
+                        $end_index = $this->notNull($item, 'end_index') ? $item['end_index'] : 'end';
+                        if ($this->notNull($val, $start_index) && $this->notNull($val, $end_index)) {
+                            $model->whereBetween($item['column'], [$val[$start_index], $val[$end_index]]);
+                        } else if ($this->notNull($val, $start_index)) {
+                            $model->where($item['column'], '>=', $val[$start_index]);
+                        } else if ($this->notNull($val, $end_index)) {
+                            $model->where($item['column'], '<=', $val[$end_index]);
+                        }
+                        break;
+                    case 'in':
+                        $model->whereIn($item['column'], $val);
+                        break;
+                    case 'null':
+                        $model->whereNull($item['column']);
+                        break;
+                    case 'notNull':
+                        $model->whereNotNull($item['column']);
+                        break;
+                    case 'like':
+                        $model->where($item['column'], 'like', '%'.$val.'%');
+                        break;
+                    default:
+                        $model->where($item['column'], is_callable($item['operator']) ? call_user_func($item['operator'] , $request[$key]) : $item['operator'], $val);
+                }
+            }
+        }
+
+        return $model;
+    }
+
+
+    /**
+     * @param $data
+     * @param $index
+     * @return bool
+     * 判断是否为空
+     */
+    protected function notNull($data, $index)
+    {
+        return isset($data[$index]) && !empty($data[$index]);
     }
 
     /**
@@ -169,6 +258,7 @@ abstract class Export
         } else {
             $returnValue['end'] = false;
         }
+
         $returnValue = $this->formatResponse($returnValue);
         return $returnValue;
     }
@@ -193,7 +283,7 @@ abstract class Export
                 if(!empty($item)) {
                     foreach ($item as $val) {
                         if (isset($val['model']) && isset($val['foreignKey'])) {
-                            $model->$key($val['model'], $val['model'].'.'.$val['foreignKey'], isset($val['symbol'])?$val['symbol']:'=', isset($val['primaryKey']) ? $val['primaryKey']: $val['foreignKey']);
+                            $model->$key($val['model'], $val['model'].'.'.$val['foreignKey'], $this->notNull($val, 'symbol') ? $val['symbol'] : '=', $this->notNull($val, 'primaryKey') ? $val['primaryKey'] : $val['foreignKey']);
                         }
                     }
                 }
